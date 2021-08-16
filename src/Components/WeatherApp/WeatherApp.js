@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import WeatherInfo from "../WeatherInfo/WeatherInfo";
 
 const API_KEY = process.env.REACT_APP_API_KEY;
-const API_URL = 'https://api.openweathermap.org/data/2.5/'
+const API_URL = 'https://api.openweathermap.org/data/2.5/';
 
 export default function WeatherApp() {
 
@@ -11,6 +11,10 @@ export default function WeatherApp() {
   const [message, setMessage] = useState('');
   const [weatherContainer, setWeatherContainer] = useState(false);
   const [weatherInfo, setWeatherInfo] = useState({});
+
+  let lat;
+  let lon;
+
 
   const cityHandler = (event) => {
     const value = event.target.value;
@@ -65,14 +69,40 @@ export default function WeatherApp() {
       wind: wind.speed,
       clouds: clouds.all,
       pressure: main.pressure
+    });
+    setWeatherContainer(true);
+  }
+
+  const checkLocation = () => {
+    navigator.geolocation.getCurrentPosition(position => {
+      lat = position.coords.latitude;
+      lon = position.coords.longitude;
+      getCurrentUserLocation();
     })
   }
+
+  const getCurrentUserLocation = () => {
+    fetch(`${API_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        return showWeather(data)
+      })
+      .catch(err => console.log(err));
+  }
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      checkLocation();
+    }
+  }, [])
+
 
   return (
     <div className="container" >
       <div className="row justify-content-center ">
-        <div className="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 col-xxl-4 p-4" style={{ backgroundColor: 'rgba(255,255,255,.25)' }}>
-          <form onSubmit={formHandler} className="d-flex">
+        <div className="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 col-xxl-4 px-0 px-sm-3" style={{ backgroundColor: 'rgba(255,255,255,.25)' }}>
+          <form onSubmit={formHandler} className="d-flex py-3">
             <input className="form-control" type="text" placeholder="wpisz miasto..." value={city} onChange={cityHandler} />
             <button className="btn btn-primary ms-3" type="submit">Wyszukaj</button>
           </form>
